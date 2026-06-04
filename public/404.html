@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Inventory PWA</title>
+    <script>
+      // GitHub Pages SPA fallback - redirect to index with route info
+      // Using the standard spa-github-pages approach
+      const l = window.location;
+      const basePath = '/inventory-app/';
+      if (l.pathname.startsWith(basePath)) {
+        sessionStorage.redirect = l.pathname.slice(basePath.length) + l.search + l.hash;
+      }
+      l.replace(basePath);
+    </script>
+  </head>
+  <body>
+    <p>Redirecting...</p>
+  </body>
+</html>

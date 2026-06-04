@@ -6,6 +6,30 @@
 /** Unit of measure – keep it simple; can be extended later. */
 export type UnitOfMeasure = 'kg' | 'g' | 'l' | 'ml' | 'pz' | 'unit';
 
+/** Standardized allergen vocabulary for EU food labeling */
+export type AllergenTag =
+  | 'cereals_containing_gluten'
+  | 'crustaceans'
+  | 'eggs'
+  | 'fish'
+  | 'peanuts'
+  | 'soybeans'
+  | 'milk'
+  | 'nuts'
+  | 'celery'
+  | 'mustard'
+  | 'sesame'
+  | 'sulphites'
+  | 'lupin'
+  | 'molluscs';
+
+/** Label-related metadata for inventory items */
+export interface ItemLabelMetadata {
+  labelName?: string;
+  allergenTags: AllergenTag[];
+  mayContain?: AllergenTag[];
+}
+
 /** Types of inventory movements. */
 export type MovementType =
   | 'create_lot'
@@ -22,6 +46,8 @@ export interface InventoryItem {
   sku?: string;
   defaultUnit: UnitOfMeasure;
   notes?: string;
+  /** Label metadata for food labeling */
+  labelMetadata?: ItemLabelMetadata;
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
 }

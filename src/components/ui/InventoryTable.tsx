@@ -57,7 +57,9 @@ export const InventoryTable: React.FC = () => {
   };
 
   const handleDeleteLot = async (lot: InventoryLot) => {
-    if (!confirm(`Sei sicuro di eliminare il lotto ${lot.id}?`)) return;
+    const itemName = items.find(i => i.id === lot.itemId)?.name || 'sconosciuto';
+    const lotRef = lot.lotNumber || lot.id.substring(0, 8);
+    if (!confirm(`Sei sicuro di eliminare il lotto ${lotRef} del prodotto "${itemName}"?`)) return;
     const { deleteLot } = await import('../../repositories/inventoryRepository');
     await deleteLot(lot.id);
     if (expandedItemId) {
@@ -132,11 +134,11 @@ export const InventoryTable: React.FC = () => {
                 <h4 className="font-medium text-gray-900 dark:text-white">Lotti</h4>
                 {lots.map((lot) => (
                   <div key={lot.id} className="bg-gray-50 dark:bg-brand-700/50 rounded-lg p-3">
-                    <div className="text-sm space-y-1 mb-2">
+                    <div className="text-sm space-y-1 mb-2 text-gray-600 dark:text-gray-400">
                       <div>ID: {lot.id.substring(0, 8)}</div>
-                      <div>Qtà: {lot.quantity} {lot.unit}</div>
-                      <div>Scad: {lot.expiryDate ? new Date(lot.expiryDate).toLocaleDateString() : '-'}</div>
-                      <div>Forn: {lot.supplier ?? '-'}</div>
+                      <div>Quantità: {lot.quantity} {lot.unit}</div>
+                      <div>Scadenza: {lot.expiryDate ? new Date(lot.expiryDate).toLocaleDateString() : '-'}</div>
+                      <div>Fornitore: {lot.supplier ?? '-'}</div>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="secondary" onClick={() => handleEditLot(lot)} className="text-xs py-1 px-2">
@@ -198,11 +200,11 @@ export const InventoryTable: React.FC = () => {
                           <thead className="bg-gray-100 dark:bg-brand-700">
                             <tr>
                               <th className="p-2 text-left text-xs font-semibold">ID</th>
-                              <th className="p-2 text-left text-xs font-semibold">Qtà</th>
+                              <th className="p-2 text-left text-xs font-semibold">Quantità</th>
                               <th className="p-2 text-left text-xs font-semibold">Unità</th>
-                              <th className="p-2 text-left text-xs font-semibold">Scad.</th>
-                              <th className="p-2 text-left text-xs font-semibold">Forn.</th>
-                              <th className="p-2 text-center text-xs font-semibold w-32">Az.</th>
+                              <th className="p-2 text-left text-xs font-semibold">Scadenza</th>
+                              <th className="p-2 text-left text-xs font-semibold">Fornitore</th>
+                              <th className="p-2 text-center text-xs font-semibold w-32">Azioni</th>
                             </tr>
                           </thead>
                           <tbody className="bg-white dark:bg-brand-800 divide-y divide-gray-200 dark:divide-brand-700">
@@ -218,10 +220,10 @@ export const InventoryTable: React.FC = () => {
                                 <td className="p-2">
                                   <div className="flex justify-center gap-1">
                                     <Button variant="secondary" onClick={() => handleEditLot(lot)} className="text-xs py-1 px-2">
-                                      Mod.
+                                      Modifica
                                     </Button>
                                     <Button variant="ghost" onClick={() => handleDeleteLot(lot)} className="text-xs py-1 px-2">
-                                      X
+                                      Elimina
                                     </Button>
                                   </div>
                                 </td>

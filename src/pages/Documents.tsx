@@ -5,6 +5,7 @@ import { db } from '../repositories/db';
 import { createLot, createItem } from '../repositories/inventoryRepository';
 import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { NumberStepper } from '../components/ui/NumberStepper';
 import { DocumentLineItem, DocumentHeader, DocumentFields } from '../domain/documentTypes';
 
 /**
@@ -243,16 +244,30 @@ const Documents: React.FC = () => {
       {/* Upload area */}
       <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
         <label className="block font-medium mb-2 text-gray-900 dark:text-white">Carica immagine o PDF</label>
-        <input
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={handleFileChange}
-          className="border border-gray-300 dark:border-brand-600 rounded-xl p-2"
-        />
+        {/* Visually hidden file input with accessible label */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={handleFileChange}
+            id="file-upload"
+            className="sr-only"
+          />
+          <label
+            htmlFor="file-upload"
+            className="cursor-pointer px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 text-center"
+          >
+            Scegli file...
+          </label>
+          {file && (
+            <span className="text-gray-700 dark:text-gray-300 break-all text-sm">
+              {file.name}
+            </span>
+          )}
+        </div>
         {file && (
-          <div className="flex items-center space-x-2 mt-4">
-            <span className="text-gray-700 dark:text-gray-300">{file.name}</span>
-            <Button onClick={handleUpload} disabled={ocrStatus === 'processing'} variant="primary">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
+            <Button onClick={handleUpload} disabled={ocrStatus === 'processing'} variant="primary" className="w-full sm:w-auto">
               {ocrStatus === 'processing' ? 'Elaborazione...' : 'Esegui OCR'}
             </Button>
           </div>
@@ -379,22 +394,26 @@ const Documents: React.FC = () => {
                         )}
                       </td>
                       <td className="p-1">
-                        <input
-                          type="number"
-                          step="any"
-                          value={item.quantity ?? ''}
-                          onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || null)}
-                          className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
-                          placeholder="0"
+                        <NumberStepper
+                          value={item.quantity || 0}
+                          onChange={(v) => handleItemChange(item.id, 'quantity', v)}
+                          unit={item.unit || 'pz'}
+                          min={0}
                         />
                       </td>
                       <td className="p-1">
-                        <input
+                        <select
                           value={item.unit || ''}
                           onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
                           className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
-                          placeholder="pz"
-                        />
+                        >
+                          <option value="">Unità</option>
+                          <option value="kg">kg</option>
+                          <option value="g">g</option>
+                          <option value="l">l</option>
+                          <option value="ml">ml</option>
+                          <option value="pz">pz</option>
+                        </select>
                       </td>
                       <td className="p-1">
                         <input
@@ -421,13 +440,13 @@ const Documents: React.FC = () => {
                         />
                       </td>
                       <td className="p-1 text-center">
-                        <button
+                        <Button
                           onClick={() => removeItem(item.id)}
-                          className="text-red-600 hover:text-red-800"
-                          title="Rimuovi riga"
+                          variant="ghost"
+                          className="px-2 py-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
-                          ✕
-                        </button>
+                          Rimuovi
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -454,26 +473,39 @@ const Documents: React.FC = () => {
         {history.length === 0 ? (
           <p className="text-gray-600 dark:text-gray-400">Nessun documento ancora.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto border-collapse">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-brand-700">
-                  <th className="p-2 text-left text-gray-900 dark:text-white">Nome file</th>
-                  <th className="p-2 text-left text-gray-900 dark:text-white">Data</th>
-                  <th className="p-2 text-left text-gray-900 dark:text-white">Stato</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((doc) => (
-                  <tr key={doc.id} className="border-t border-gray-200 dark:border-brand-700">
-                    <td className="p-2 text-gray-900 dark:text-white">{doc.fileName}</td>
-                    <td className="p-2 text-gray-600 dark:text-gray-300">{new Date(doc.createdAt).toLocaleString()}</td>
-                    <td className="p-2"><StatusBadge status={doc.status} /></td>
+          <>
+            {/* Mobile card view */}
+            <div className="md:hidden space-y-3">
+              {history.map((doc) => (
+                <div key={doc.id} className="bg-gray-50 dark:bg-brand-900/30 rounded-lg p-3 border border-gray-200 dark:border-brand-700">
+                  <div className="font-medium text-gray-900 dark:text-white break-all">{doc.fileName}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{new Date(doc.createdAt).toLocaleString()}</div>
+                  <div className="mt-2"><StatusBadge status={doc.status} /></div>
+                </div>
+              ))}
+            </div>
+            {/* Desktop table view */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full table-auto border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-brand-700">
+                    <th className="p-2 text-left text-gray-900 dark:text-white">Nome file</th>
+                    <th className="p-2 text-left text-gray-900 dark:text-white">Data</th>
+                    <th className="p-2 text-left text-gray-900 dark:text-white">Stato</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {history.map((doc) => (
+                    <tr key={doc.id} className="border-t border-gray-200 dark:border-brand-700">
+                      <td className="p-2 text-gray-900 dark:text-white">{doc.fileName}</td>
+                      <td className="p-2 text-gray-600 dark:text-gray-300">{new Date(doc.createdAt).toLocaleString()}</td>
+                      <td className="p-2"><StatusBadge status={doc.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

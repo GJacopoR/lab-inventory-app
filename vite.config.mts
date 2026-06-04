@@ -2,22 +2,30 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Load base path from environment (for GitHub Pages) or default to root
+const getBasePath = () => {
+  if (process.env.GITHUB_PAGES) {
+    return '/inventory-app/';
+  }
+  return '/';
+};
+
 export default defineConfig({
+  base: getBasePath(),
   plugins: [
     react(),
-        VitePWA({
+    VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
-      // Single source of truth for the manifest
+      injectRegister: false,
       manifest: {
         name: 'Lab Inventory PWA',
         short_name: 'Inventario',
         description: 'Gestione inventario e ricette per laboratori alimentari',
-        start_url: '/',
-        scope: '/',
+        start_url: '.',
+        scope: '.',
         display: 'standalone',
         background_color: '#fdfdfd',
-        theme_color: '#2563eb', // Tailwind blue‑600
+        theme_color: '#2563eb',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -32,11 +40,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // generateSW defaults are fine for the MVP
         cleanupOutdatedCaches: true,
       },
     }),
   ],
-  // optional base path handling if later needed
-  // base: '/',
 });

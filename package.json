@@ -8,7 +8,9 @@
     "preview": "vite preview",
     "test": "vitest",
     "cypress": "cypress open",
-    "seed": "node src/seeds/seedOnFirstLaunch.js"
+    "seed": "node src/seeds/seedOnFirstLaunch.js",
+    "deploy": "gh-pages -d dist",
+    "predeploy": "npm run build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
