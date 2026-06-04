@@ -7,7 +7,7 @@ import {
   InventoryMovement,
 } from '../models';
 import { Document } from '../domain/documentTypes';
-import { Recipe as DomainRecipe, RecipeIngredient as DomainRecipeIngredient, ProductionBatch as DomainProductionBatch } from '../domain/recipeTypes';
+import { Recipe as DomainRecipe, RecipeIngredient as DomainRecipeIngredient, ProductionBatch as DomainProductionBatch, RecipePreparation as DomainRecipePreparation } from '../domain/recipeTypes';
 import { InventoryItem, InventoryLot as DomainInventoryLot, InventoryMovement as DomainInventoryMovement, UnitOfMeasure } from '../domain/inventoryTypes';
 
 /**
@@ -26,6 +26,7 @@ export class LabInventoryDB extends Dexie {
   recipes!: Table<DomainRecipe, string>;
   recipeIngredients!: Table<DomainRecipeIngredient, string>;
   productionBatches!: Table<DomainProductionBatch, string>;
+  recipePreparations!: Table<DomainRecipePreparation, string>;
   // New inventory tables
   inventoryItems!: Table<InventoryItem, string>;
   inventoryLots!: Table<DomainInventoryLot, string>;
@@ -52,6 +53,7 @@ export class LabInventoryDB extends Dexie {
       recipes: 'id, name, expectedYield, yieldUnit, createdAt, updatedAt',
       recipeIngredients: 'id, recipeId, inventoryItemId, quantity, unit',
       productionBatches: 'id, recipeId, producedQuantity, producedUnit, notes, createdAt',
+      recipePreparations: 'id, recipeId, lotCode, producedAt, expiresAt, createdAt',
       // Documents table
       documents: 'id, fileName, createdAt'
     });

@@ -1,5 +1,5 @@
 import { db } from './db';
-import { InventoryItem, InventoryLot, InventoryMovement, MovementType, UnitOfMeasure } from '../domain/inventoryTypes';
+import { InventoryItem, InventoryLot, InventoryMovement, MovementType, UnitOfMeasure, AllergenTag } from '../domain/inventoryTypes';
 
 /** Simple ID generator – uses browser crypto if available. */
 export function genId(): string {
@@ -55,7 +55,7 @@ export async function getItemWithLots(itemId: string): Promise<{ item: Inventory
 }
 
 /** Create a new inventory item */
-export async function createItem(data: { name: string; sku?: string; defaultUnit: string; notes?: string }): Promise<InventoryItem> {
+export async function createItem(data: { name: string; sku?: string; defaultUnit: string; notes?: string; labelMetadata?: { labelName?: string; allergenTags: AllergenTag[]; mayContain?: AllergenTag[] } }): Promise<InventoryItem> {
   const now = new Date().toISOString();
   const newItem: InventoryItem = {
     id: genId(),
@@ -63,6 +63,7 @@ export async function createItem(data: { name: string; sku?: string; defaultUnit
     sku: data.sku,
     defaultUnit: data.defaultUnit as any,
     notes: data.notes,
+    labelMetadata: data.labelMetadata,
     createdAt: now,
     updatedAt: now,
   };
@@ -171,11 +172,31 @@ export async function seedDemoInventory(): Promise<void> {
   const count = await db.inventoryItems.count();
   if (count > 0) return;
   const now = new Date().toISOString();
-  // Create a couple of items
-  // Seed inventory items and lots using the repository helpers to ensure proper movement records.
-  const item1 = await createItem({ name: 'Farina 00', sku: 'FAR-00', defaultUnit: 'kg' });
-  const item2 = await createItem({ name: 'Zucchero', sku: 'ZUC', defaultUnit: 'kg' });
-  const item3 = await createItem({ name: 'Uova', sku: 'UOV', defaultUnit: 'pz' });
+  // Create items with allergen metadata
+  const item1 = await createItem({
+    name: 'Farina 00',
+    sku: 'FAR-00',
+    defaultUnit: 'kg',
+    labelMetadata: { labelName: 'Farina di frumento', allergenTags: ['cereals_containing_gluten'], mayContain: [] },
+  });
+  const item2 = await createItem({
+    name: 'Zucchero',
+    sku: 'ZUC',
+    defaultUnit: 'kg',
+    labelMetadata: { labelName: 'Zucchero semolato', allergenTags: [], mayContain: [] },
+  });
+  const item3 = await createItem({
+    name: 'Uova',
+    sku: 'UOV',
+    defaultUnit: 'pz',
+    labelMetadata: { labelName: 'Uova', allergenTags: ['eggs'], mayContain: [] },
+  });
+  const item4 = await createItem({
+    name: 'Latte intero',
+    sku: 'LAT',
+    defaultUnit: 'l',
+    labelMetadata: { labelName: 'Latte intero', allergenTags: ['milk'], mayContain: [] },
+  });
 
   const addDays = (d: number) => new Date(Date.now() + d * 24 * 60 * 60 * 1000).toISOString();
   // Use createLot to add lots (which also records movements)

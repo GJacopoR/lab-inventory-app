@@ -47,14 +47,14 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-3 md:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 print-none">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
       {/* Modal content */}
-      <div className={`relative bg-white dark:bg-brand-800 rounded-xl shadow-xl w-full ${sizeClasses[size]} max-h-[95vh] md:max-h-[90vh] overflow-y-auto mt-4 md:mt-0`}>
+      <div className={`relative bg-white dark:bg-brand-800 rounded-xl shadow-xl w-full ${sizeClasses[size]} max-h-[95vh] md:max-h-[90vh] overflow-y-auto`}>
         <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 dark:border-brand-700">
           <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
           <button

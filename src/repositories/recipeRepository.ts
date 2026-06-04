@@ -1,6 +1,6 @@
 import { db } from './db';
-import { Recipe, RecipeIngredient, ProductionBatch } from '../domain/recipeTypes';
-import { InventoryLot, InventoryMovement, MovementType } from '../domain/inventoryTypes';
+import { Recipe, RecipeIngredient, ProductionBatch, RecipePreparation, PreparationIngredientSnapshot, LabelDateType, ShelfLifePreset, StorageCondition } from '../domain/recipeTypes';
+import { InventoryItem, AllergenTag, InventoryMovement } from '../domain/inventoryTypes';
 import { genId } from './inventoryRepository'; // reuse ID generator
 
 /** Helper to fetch a recipe with its ingredients */
@@ -168,4 +168,133 @@ export async function prepareRecipe(params: {
   };
   await db.productionBatches.add(batch);
   return batch;
+}
+
+/** Calculate expiry date from shelf life preset and production date */
+function calculateExpiryDate(producedAt: string, preset: ShelfLifePreset): string {
+  const producedDate = new Date(producedAt);
+  switch (preset) {
+    case '3_days':
+      producedDate.setDate(producedDate.getDate() + 3);
+      break;
+    case '7_days':
+      producedDate.setDate(producedDate.getDate() + 7);
+      break;
+    case '2_years':
+      producedDate.setFullYear(producedDate.getFullYear() + 2);
+      break;
+  }
+  return producedDate.toISOString();
+}
+
+/** Generate a lot code in format LYYYYMMDD-XX where XX is a sequence number */
+async function generateLotCode(producedAt: string): Promise<string> {
+  const datePart = producedAt.substring(0, 10).replace(/-/g, '');
+  const prefix = `L${datePart}`;
+
+  // Find existing lot codes with the same date prefix
+  const existing = await db.recipePreparations
+    .where('lotCode')
+    .startsWith(prefix)
+    .toArray();
+
+  const sequence = (existing.length + 1).toString().padStart(2, '0');
+  return `${prefix}-${sequence}`;
+}
+
+/** Create a recipe preparation with label snapshot */
+export async function createRecipePreparation(params: {
+  recipeId: string;
+  producedAt?: string; // defaults to today
+  producedQuantity: number;
+  producedUnit: string;
+  netQuantityLabel?: string;
+  shelfLifePreset: ShelfLifePreset;
+  dateType: LabelDateType;
+  storageCondition: StorageCondition;
+  operatorName?: string;
+  plantCode?: string;
+}): Promise<RecipePreparation> {
+  // Get recipe with ingredients
+  const { recipe, ingredients } = await getRecipeWithIngredients(params.recipeId);
+
+  // Get inventory items for label metadata
+  const itemIds = ingredients.map(ing => ing.inventoryItemId);
+  const items = await db.inventoryItems.where('id').anyOf(itemIds).toArray();
+  const itemMap = new Map(items.map(item => [item.id, item]));
+
+  // Calculate expiry date
+  const producedAt = params.producedAt || new Date().toISOString();
+  const expiresAt = calculateExpiryDate(producedAt, params.shelfLifePreset);
+
+  // Generate lot code
+  const lotCode = await generateLotCode(producedAt);
+
+  // Build ingredient snapshot sorted by quantity descending
+  const ingredientSnapshots: PreparationIngredientSnapshot[] = [...ingredients]
+    .map(ing => {
+      const item = itemMap.get(ing.inventoryItemId);
+      const metadata = item?.labelMetadata;
+      return {
+        itemId: ing.inventoryItemId,
+        itemName: item?.name || ing.inventoryItemId,
+        labelName: metadata?.labelName || item?.name || ing.inventoryItemId,
+        quantity: ing.quantity,
+        unit: ing.unit,
+        allergenTags: metadata?.allergenTags || [],
+      };
+    })
+    .sort((a, b) => b.quantity - a.quantity);
+
+  // Aggregate allergens from all ingredients (unique set)
+  const allergenSet = new Set<AllergenTag>();
+  ingredientSnapshots.forEach(snap => {
+    snap.allergenTags.forEach(tag => allergenSet.add(tag));
+  });
+  const allergenSnapshot: AllergenTag[] = [...allergenSet];
+
+  // Create preparation record
+  const now = new Date().toISOString();
+  const preparation: RecipePreparation = {
+    id: genId(),
+    recipeId: params.recipeId,
+    recipeNameSnapshot: recipe.name,
+    foodNameSnapshot: recipe.name,
+    producedAt,
+    producedQuantity: params.producedAt ? params.producedQuantity : params.producedQuantity,
+    producedUnit: params.producedUnit,
+    netQuantityLabel: params.netQuantityLabel,
+    lotCode,
+    shelfLifePreset: params.shelfLifePreset,
+    dateType: params.dateType,
+    expiresAt,
+    storageCondition: params.storageCondition,
+    operatorName: params.operatorName || 'Produttore',
+    plantCode: params.plantCode || 'IT 0000',
+    ingredientSnapshot: ingredientSnapshots,
+    allergenSnapshot,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await db.recipePreparations.add(preparation);
+  return preparation;
+}
+
+/** List all preparations, optionally filtered by recipe */
+export async function listPreparations(recipeId?: string): Promise<RecipePreparation[]> {
+  if (recipeId) {
+    return db.recipePreparations.where('recipeId').equals(recipeId).toArray();
+  }
+  return db.recipePreparations.toArray();
+}
+
+/** Get a single preparation by ID */
+export async function getPreparation(id: string): Promise<RecipePreparation | undefined> {
+  return db.recipePreparations.get(id);
+}
+
+/** Delete a preparation */
+export async function deletePreparation(id: string): Promise<void> {
+  await db.recipePreparations.delete(id);
 }

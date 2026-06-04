@@ -61,7 +61,8 @@ export const AuthenticatedShell: React.FC = () => {
           </button>
           <button
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-brand-700"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-brand-700 text-gray-700 dark:text-gray-300"
+            aria-label="Menu"
           >
             ☰
           </button>
