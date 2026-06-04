@@ -2,22 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipes, usePreparations } from '../hooks/useRecipes';
 import { Button } from '../components/ui/Button';
-import { MovementHistory } from '../components/ui/MovementHistory';
-import { InventoryMovement } from '../domain/inventoryTypes';
-import { NumberStepper } from '../components/ui/NumberStepper';
 import { LabelPreviewModal } from '../components/ui/LabelPreviewModal';
 import { Modal } from '../components/ui/Modal';
+import { NumberStepper } from '../components/ui/NumberStepper';
 import { RecipePreparation } from '../domain/recipeTypes';
 
 /** Detailed view of a single recipe with availability and production */
 const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { loadDetail, detail, prepare } = useRecipes();
+  const { loadDetail, detail } = useRecipes();
   const { preparations, loadPreparations, createPreparation } = usePreparations();
-  const [batches, setBatches] = useState('1');
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [showPrepModal, setShowPrepModal] = useState(false);
   const [prepQuantity, setPrepQuantity] = useState(0);
   const [shelfLife, setShelfLife] = useState<'3_days' | '7_days' | '2_years'>('7_days');
@@ -26,10 +22,7 @@ const RecipeDetail: React.FC = () => {
   const [showLabelModal, setShowLabelModal] = useState(false);
   const [selectedPrepForLabel, setSelectedPrepForLabel] = useState<RecipePreparation | null>(null);
 
-  // Gather movements for this recipe's production batches (optional simple view)
-  const [prodMovements, setProdMovements] = useState<InventoryMovement[]>([]);
-
-  // Set initial quantity when recipe loads (runs even before detail is ready - uses detail safely)
+  // Set initial quantity when recipe loads
   useEffect(() => {
     if (detail?.recipe && prepQuantity === 0) {
       setPrepQuantity(detail.recipe.expectedYield);
@@ -37,29 +30,11 @@ const RecipeDetail: React.FC = () => {
   }, [detail?.recipe, prepQuantity]);
 
   useEffect(() => {
-    // Load movements related to ingredient items for this recipe (simplified)
-    // For now we just show all movements (could filter by recipeId via productionBatches link)
-    // This placeholder keeps UI simple.
-  }, []);
-
-  useEffect(() => {
     if (id) {
       loadDetail(id);
       loadPreparations(id);
     }
   }, [id, loadDetail, loadPreparations]);
-
-  const handlePrepare = async () => {
-    setError(null);
-    setSuccess(null);
-    if (!detail) return;
-    try {
-      await prepare(detail.recipe.id, Number(batches));
-      setSuccess('Produzione completata e inventario aggiornato.');
-    } catch (e:any) {
-      setError(e.message || 'Errore nella produzione');
-    }
-  };
 
   // Navigate directly to label preview after creation
   const handleCreatePreparation = async (e: React.FormEvent) => {
@@ -257,11 +232,6 @@ const RecipeDetail: React.FC = () => {
           </div>
         </form>
       </Modal>
-
-      <section className="mt-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Storico movimenti</h2>
-        <MovementHistory movements={prodMovements} />
-      </section>
 
       {/* Shared Label Preview Modal for past preparations */}
       <LabelPreviewModal

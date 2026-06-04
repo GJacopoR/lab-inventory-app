@@ -32,16 +32,25 @@ const Labels: React.FC = () => {
     load();
   }, []);
 
-  // Auto-open preview if prep ID is passed in URL
+  // Auto-open preview if prep ID is passed in URL - load the specific prep if needed
   useEffect(() => {
-    if (prepId && preparations.length > 0) {
-      const prep = preparations.find(p => p.id === prepId);
-      if (prep) {
-        setSelectedPreparation(prep);
+    if (prepId && !selectedPreparation) {
+      // First check if already in loaded preparations
+      const existing = preparations.find(p => p.id === prepId);
+      if (existing) {
+        setSelectedPreparation(existing);
         setShowPreview(true);
+      } else if (preparations.length > 0) {
+        // If list loaded but prep not found, try to load it directly
+        db.recipePreparations.get(prepId).then(prep => {
+          if (prep) {
+            setSelectedPreparation(prep);
+            setShowPreview(true);
+          }
+        });
       }
     }
-  }, [prepId, preparations]);
+  }, [prepId, preparations, selectedPreparation]);
 
   // Auto-trigger print when preview opens via URL param (direct from recipe)
   useEffect(() => {

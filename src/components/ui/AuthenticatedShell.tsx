@@ -47,7 +47,7 @@ export const AuthenticatedShell: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <>
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-brand-900">
       {/* Mobile header - only on mobile */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-brand-800 border-b border-gray-200 dark:border-brand-700">
         <h1 className="text-lg font-bold text-brand-900 dark:text-white">Lab Inventory</h1>
@@ -147,6 +147,6 @@ export const AuthenticatedShell: React.FC = () => {
       <main className="flex-1 p-4 md:p-6 overflow-y-auto">
         <Outlet />
       </main>
-    </>
+    </div>
   );
 };
