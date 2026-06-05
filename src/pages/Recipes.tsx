@@ -116,7 +116,7 @@ function CreateRecipeModal({
     const validIngredients = ingredients.filter(
       (ing) => ing.inventoryItemId && Number(ing.quantity) > 0 && ing.unit
     );
-    const { createRecipe } = await import('../repositories/recipeRepository');
+    const { createRecipe } = await import('../repositories/recipeRepository.js');
     await createRecipe({
       name,
       description: '',

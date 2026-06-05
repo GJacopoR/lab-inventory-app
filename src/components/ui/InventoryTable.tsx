@@ -60,7 +60,7 @@ export const InventoryTable: React.FC = () => {
     const itemName = items.find(i => i.id === lot.itemId)?.name || 'sconosciuto';
     const lotRef = lot.lotNumber || lot.id.substring(0, 8);
     if (!confirm(`Sei sicuro di eliminare il lotto ${lotRef} del prodotto "${itemName}"?`)) return;
-    const { deleteLot } = await import('../../repositories/inventoryRepository');
+    const { deleteLot } = await import('../../repositories/inventoryRepository.js');
     await deleteLot(lot.id);
     if (expandedItemId) {
       const { lots } = await fetchItemDetails(expandedItemId);
