@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Lab Inventory PWA - React + TypeScript + Vite + Dexie (IndexedDB) for local-first inventory management. Target deployment: GitHub Pages at `/inventory-app/`.
+Lab Inventory PWA - React + TypeScript + Vite + Dexie (IndexedDB) for local-first inventory management. Target deployment: GitHub Pages at `/lab-inventory-app/`.
 
 ## Common Commands
 
@@ -23,7 +23,7 @@ See `README.md` for key commands and `docs/runbook.md` for the full command chec
 
 1. All data lives in IndexedDB (no external API)
 2. `LabelPreviewModal` is the **single source of truth** for label preview/print - uses `print-none` and `print-label` CSS classes
-3. Service worker registration is **inline in index.html** (not auto-injected) - detects `/inventory-app/` path at runtime
+3. Service worker registration is **inline in index.html** (not auto-injected) - detects `/lab-inventory-app/` path at runtime
 4. Manifest uses **relative paths** (`.`) for GitHub Pages compatibility
 5. Build with `GITHUB_PAGES=true` for correct base paths
 6. Recipe preparations auto-print on Labels page via `window.print()` after 500ms when `?prep=` URL param present

@@ -19,22 +19,23 @@ After `npm run build`:
 
 ## GitHub Pages Strategy
 
-- **Base path**: `/inventory-app/` (set via `GITHUB_PAGES=true` env var before `npm run build`)
-- **404 fallback**: `public/404.html` saves `sessionStorage.redirect` then redirects to `/inventory-app/`
-- **SPA routing**: React Router handles restored routes; NavigationRoute in sw.js serves `index.html` for navigation requests
+- **Base path**: `/lab-inventory-app/` (set via `GITHUB_PAGES=true` env var before `npm run build`)
+- **404 fallback**: `public/404.html` saves `sessionStorage.redirect` then redirects to `/lab-inventory-app/`
+- **SPA routing**: React Router uses `import.meta.env.BASE_URL` for dynamic basename; NavigationRoute in sw.js serves `index.html` for navigation requests
 
 ## Deployment
 
 ```bash
 # From project root
 GITHUB_PAGES=true npm run build  # Build with correct base paths
-npm run deploy                   # Deploys /dist to GitHub Pages (gh-pages -d dist)
+npm run deploy                   # Deploys /dist to gh-pages branch
 ```
 
-Requires `gh-pages` installed globally (`npm install -g gh-pages`).
+Requires GitHub Pages live at `https://gjacopor.github.io/lab-inventory-app/`.
 
 ## Known Constraints
 
-- Service worker scope determined at runtime in `index.html:17-19`
+- Service worker scope determined at runtime (detects `/lab-inventory-app/` path)
 - Offline limited to app shell + cached assets (no server sync)
 - Update prompt requires user click (registerType: 'prompt')
+- **Cache note**: If old `/inventory-app/` paths cached, hard refresh or clear site data required

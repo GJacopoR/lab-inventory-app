@@ -15,7 +15,7 @@ See `README.md` for all commands. Quick reference:
 
 ## Manual Smoke Checks
 
-1. Load `/inventory-app/` - should show login
+1. Load `/lab-inventory-app/` - should show login
 2. Login and navigate to Dashboard
 3. Create a recipe, prepare it, print label
 4. Go offline - offline banner should appear

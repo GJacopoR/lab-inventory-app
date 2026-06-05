@@ -14,5 +14,6 @@ Need reliable deployment to GitHub Pages with SPA routing.
 ## Consequences
 
 - Works locally without env var (`/` base path)
-- Works on GitHub Pages (`/inventory-app/` base path)
+- Works on GitHub Pages (`/lab-inventory-app/` base path)
 - Deep links refresh correctly
+- **2026-06**: Fixed incorrect path assumption: repo is `lab-inventory-app`, not `inventory-app`

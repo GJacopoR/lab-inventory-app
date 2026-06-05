@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 // Load base path from environment (for GitHub Pages) or default to root
 const getBasePath = () => {
   if (process.env.GITHUB_PAGES) {
-    return '/inventory-app/';
+    return '/lab-inventory-app/';
   }
   return '/';
 };

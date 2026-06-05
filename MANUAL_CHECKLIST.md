@@ -11,8 +11,8 @@ Use this checklist for features that require manual verification in a browser.
 
 ## GitHub Pages Deployment
 
-- [ ] Direct navigation to `/inventory-app/recipes/123` works (no 404)
-- [ ] Refresh on any route (e.g., `/inventory-app/settings`) loads correctly
+- [ ] Direct navigation to `/lab-inventory-app/recipes/123` works (no 404)
+- [ ] Refresh on any route (e.g., `/lab-inventory-app/settings`) loads correctly
 - [ ] Service worker registers without errors (Check DevTools > Application)
 - [ ] Manifest loads correctly (Check DevTools > Application > Manifest)
 

@@ -9,17 +9,17 @@
   <body class="bg-gray-50 dark:bg-brand-800 text-gray-900 antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- <script>
+    <script>
       // Custom service worker registration with dynamic base path detection
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const path = window.location.pathname;
-          const isGitHubPages = path.startsWith('/inventory-app');
-          const swPath = isGitHubPages ? '/inventory-app/sw.js' : '/sw.js';
-          const scope = isGitHubPages ? '/inventory-app/' : '/';
+          const isGitHubPages = path.startsWith('/lab-inventory-app');
+          const swPath = isGitHubPages ? '/lab-inventory-app/sw.js' : '/sw.js';
+          const scope = isGitHubPages ? '/lab-inventory-app/' : '/';
           navigator.serviceWorker.register(swPath, { scope: scope });
         });
       }
-    </script> -->
+    </script>
   </body>
 </html>
