@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import { OfflineIndicator } from './OfflineIndicator';
+import { UpdatePrompt } from './UpdatePrompt';
 
 /**
  * Shared layout for all authenticated pages.
@@ -8,6 +10,7 @@ import { useAuth } from '../../auth/AuthContext';
  * - Sidebar navigation (collapses to top bar on mobile)
  * - Theme toggle (light/dark)
  * - Responsive design
+ * - Offline connectivity awareness
  */
 export const AuthenticatedShell: React.FC = () => {
   const { user, logout } = useAuth();
@@ -42,6 +45,7 @@ export const AuthenticatedShell: React.FC = () => {
     { to: '/recipes', label: 'Ricette', icon: '🍰' },
     { to: '/documents', label: 'Documenti', icon: '📄' },
     { to: '/labels', label: 'Etichette', icon: '🏷️' },
+    { to: '/settings', label: 'Impostazioni', icon: '⚙️' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -145,6 +149,8 @@ export const AuthenticatedShell: React.FC = () => {
 
       {/* Main content */}
       <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+        <OfflineIndicator />
+        <UpdatePrompt />
         <Outlet />
       </main>
     </div>

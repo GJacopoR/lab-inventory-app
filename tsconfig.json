@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "node10",
     "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
@@ -11,8 +11,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "resolveJsonModule": true,
-    "baseUrl": "./",
-      "paths": {
+    "paths": {
       "@/*": ["src/*"]
     }
   },

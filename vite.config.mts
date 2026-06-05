@@ -15,7 +15,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       manifest: {
         name: 'Lab Inventory PWA',
@@ -41,6 +41,16 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            // Cache navigation requests for offline support
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'navigation-cache',
+            },
+          },
+        ],
       },
     }),
   ],
