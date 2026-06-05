@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lab Inventory PWA</title>
+    <meta name="theme-color" content="#2563eb" />
+    <script type="module" crossorigin src="/inventory-app/assets/index-BovoD6rb.js"></script>
+    <link rel="stylesheet" crossorigin href="/inventory-app/assets/index-4Q0KOXYO.css">
+  <link rel="manifest" href="/inventory-app/manifest.webmanifest"></head>
+  <body class="bg-gray-50 dark:bg-brand-800 text-gray-900 antialiased">
+    <div id="root"></div>
+    <script>
+      // Custom service worker registration with dynamic base path detection
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          const path = window.location.pathname;
+          const isGitHubPages = path.startsWith('/inventory-app');
+          const swPath = isGitHubPages ? '/inventory-app/sw.js' : '/sw.js';
+          const scope = isGitHubPages ? '/inventory-app/' : '/';
+          navigator.serviceWorker.register(swPath, { scope: scope });
+        });
+      }
+    </script>
+  </body>
+</html>
