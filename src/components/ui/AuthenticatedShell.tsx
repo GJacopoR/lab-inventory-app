@@ -40,7 +40,7 @@ export const AuthenticatedShell: React.FC = () => {
   };
 
   const navItems = [
-    { to: '/dashboard', label: 'Dashboard', icon: '📊' },
+    // { to: '/dashboard', label: 'Dashboard', icon: '📊' },
     { to: '/inventory', label: 'Inventario', icon: '📦' },
     { to: '/recipes', label: 'Ricette', icon: '🍰' },
     { to: '/documents', label: 'Documenti', icon: '📄' },
@@ -53,8 +53,10 @@ export const AuthenticatedShell: React.FC = () => {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-brand-900">
       {/* Mobile header - only on mobile */}
-      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-brand-800 border-b border-gray-200 dark:border-brand-700">
-        <h1 className="text-lg font-bold text-brand-900 dark:text-white">Lab Inventory</h1>
+      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-brand-800 border-b border-gray-200 dark:border-brand-700 fixed w-full top-0">
+        <h1 className="text-lg font-bold text-brand-900 dark:text-white" onClick={() => navigate('/')}>
+          Lab Inventory
+        </h1>
         <div className="flex items-center space-x-2">
           <button
             onClick={toggleTheme}
@@ -74,7 +76,7 @@ export const AuthenticatedShell: React.FC = () => {
       </header>
 
       {mobileNavOpen && (
-        <nav className="md:hidden bg-white dark:bg-brand-800 border-b border-gray-200 dark:border-brand-700">
+        <nav className="md:hidden bg-white dark:bg-brand-800 border-b border-gray-200 dark:border-brand-700 fixed w-full top-16 shadow-lg">
           <div className="flex flex-col p-2 space-y-1">
             {navItems.map((item) => (
               <a
@@ -148,7 +150,7 @@ export const AuthenticatedShell: React.FC = () => {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-6 mt-16 overflow-y-auto">
         <OfflineIndicator />
         <UpdatePrompt />
         <Outlet />

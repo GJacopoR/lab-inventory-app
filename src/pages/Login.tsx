@@ -37,16 +37,18 @@ const Login: React.FC = () => {
   };
 
   return (
-    <SectionContainer className="max-w-md mx-auto bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 shadow-lg p-8 ring-2 ring-brand-500/20">
-      <h1 className="text-4xl font-bold text-brand-900 dark:text-brand-100 mb-4 text-center">Lab Inventory PWA</h1>
-      <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-        Accedi per gestire inventario, ricette, documenti ed etichette.
-      </p>
-      {error && <p className="text-red-600 dark:text-red-400 mb-2" role="alert">{error}</p>}
-      <Button onClick={handleLogin} disabled={loading} block>
-        {loading ? 'Caricamento…' : 'Entra'}
-      </Button>
-    </SectionContainer>
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-brand-900 px-4">
+      <SectionContainer className="max-w-md mx-auto bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 shadow-lg p-8 ring-2 ring-brand-500/20">
+        <h1 className="text-4xl font-bold text-brand-900 dark:text-brand-100 mb-4 text-center">Lab Inventory PWA</h1>
+        <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
+          Accedi per gestire inventario, ricette, documenti ed etichette.
+        </p>
+        {error && <p className="text-red-600 dark:text-red-400 mb-2" role="alert">{error}</p>}
+        <Button onClick={handleLogin} disabled={loading} block>
+          {loading ? 'Caricamento…' : 'Entra'}
+        </Button>
+      </SectionContainer>
+    </main>
   );
 };
 

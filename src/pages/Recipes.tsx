@@ -178,7 +178,7 @@ function CreateRecipeModal({
           ) : (
             <div className="space-y-2">
               {ingredients.map((ing, idx) => (
-                <div key={idx} className="flex gap-2 items-center">
+                <div key={idx} className="flex gap-2 flex-wrap justify-between items-center">
                   <select
                     value={ing.inventoryItemId}
                     onChange={(e) => updateIngredient(idx, 'inventoryItemId', e.target.value)}
@@ -212,7 +212,7 @@ function CreateRecipeModal({
                     onClick={() => removeIngredient(idx)}
                     className="px-2 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
-                    Rimuovi
+                    Rimuovi ingrediente
                   </Button>
                 </div>
               ))}

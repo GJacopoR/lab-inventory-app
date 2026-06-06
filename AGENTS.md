@@ -28,6 +28,8 @@ See `README.md` for key commands and `docs/runbook.md` for the full command chec
 5. Build with `GITHUB_PAGES=true` for correct base paths
 6. Recipe preparations auto-print on Labels page via `window.print()` after 500ms when `?prep=` URL param present
 
+**Cache note**: After broken deployments, users may need hard refresh or clear site data to remove stale service workers.
+
 ## Sensitive Components
 
 - **Do not** modify `vite.config.mts` PWA settings without testing installability
@@ -73,9 +75,10 @@ If a change affects a sensitive area, check docs before editing code and update 
 Sensitive areas include:
 - `src/repositories/db.ts`
 - `src/repositories/backupRepository.ts`
-- `vite.config.mts`
-- `index.html`
-- `public/404.html`
+- `vite.config.mts` (base path/PWA settings)
+- `index.html` (service worker registration)
+- `public/404.html` (SPA fallback)
+- `src/main.tsx` (router basename via import.meta.env.BASE_URL)
 - `src/components/ui/LabelPreviewModal.tsx`
 - `src/components/ui/Modal.tsx`
 - `src/components/ui/AuthenticatedShell.tsx`
