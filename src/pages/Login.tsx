@@ -49,7 +49,7 @@ const Login: React.FC = () => {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: 'url(/public/inventoryBg.avif)',
+            backgroundImage: `url(${import.meta.env.BASE_URL}inventoryBg.avif)`,
             backgroundColor: '#f9fafb', // Fallback color matching light theme
           }}
           aria-hidden="true"
