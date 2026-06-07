@@ -7,9 +7,13 @@ import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { NumberStepper } from '../components/ui/NumberStepper';
 import { DocumentLineItem, DocumentHeader, DocumentFields } from '../domain/documentTypes';
+import { AnimatedPage } from '../components/ui/PageHeader';
+import { useCapabilities } from '../auth/AuthContext';
 
 /**
  * Documents page – full OCR workflow with supplier-aware parsing.
+ * Create operations are restricted by role-based permissions.
+ * Letture users can only view history, cannot process OCR or create inventory.
  */
 const Documents: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -24,6 +28,7 @@ const Documents: React.FC = () => {
   });
   const [items, setItems] = useState<(DocumentLineItem & { needsReview?: boolean; reviewReasons?: string[] })[]>([]);
   const [history, setHistory] = useState<Array<any>>([]);
+  const { canCreate } = useCapabilities();
 
   useEffect(() => {
     const load = async () => {
@@ -48,6 +53,7 @@ const Documents: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canCreate) return;
     const f = e.target.files?.[0] ?? null;
     if (!f) return;
     if (!['image/', 'application/pdf'].some((type) => f.type.startsWith(type))) {
@@ -58,6 +64,7 @@ const Documents: React.FC = () => {
   };
 
   const runOcr = async (f: File) => {
+    if (!canCreate) return;
     setOcrStatus('processing');
     try {
       let imageFile = f;
@@ -96,16 +103,18 @@ const Documents: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!canCreate || !file) return;
     await runOcr(file);
   };
 
   const handleHeaderChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!canCreate) return;
     const { name, value } = e.target;
     setHeader((prev) => ({ ...prev, [name]: value, needsReview: false }));
   };
 
   const handleItemChange = (id: string, field: keyof DocumentLineItem, value: string | number | null | undefined) => {
+    if (!canCreate) return;
     setItems((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, [field]: value, needsReview: false } : item
@@ -114,10 +123,12 @@ const Documents: React.FC = () => {
   };
 
   const removeItem = (id: string) => {
+    if (!canCreate) return;
     setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const addItem = () => {
+    if (!canCreate) return;
     const newItem: DocumentLineItem & { needsReview: boolean } = {
       id: genItemId(),
       productName: '',
@@ -142,7 +153,7 @@ const Documents: React.FC = () => {
   };
 
   const saveDocument = async () => {
-    if (!file) return;
+    if (!canCreate || !file) return;
     const extractedFields: DocumentFields = {
       header,
       items: items.map(({ needsReview, reviewReasons, ...item }) => item) as DocumentLineItem[],
@@ -163,6 +174,7 @@ const Documents: React.FC = () => {
   };
 
   const createInventoryFromItems = async () => {
+    if (!canCreate) return;
     const validItems = items.filter((item) => {
       const validation = validateLineItem(item);
       return !item.needsReview && validation.isValid;
@@ -236,279 +248,290 @@ const Documents: React.FC = () => {
   const headerValidation = validateHeader(header);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Documenti</h1>
-      </div>
-
-      {/* Upload area */}
-      <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
-        <label className="block font-medium mb-2 text-gray-900 dark:text-white">Carica immagine o PDF</label>
-        {/* Visually hidden file input with accessible label */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <input
-            type="file"
-            accept="image/*,application/pdf"
-            onChange={handleFileChange}
-            id="file-upload"
-            className="sr-only"
-          />
-          <label
-            htmlFor="file-upload"
-            className="cursor-pointer px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 text-center"
-          >
-            Scegli file...
-          </label>
-          {file && (
-            <span className="text-gray-700 dark:text-gray-300 break-all text-sm">
-              {file.name}
-            </span>
-          )}
+    <AnimatedPage>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Documenti</h1>
         </div>
-        {file && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
-            <Button onClick={handleUpload} disabled={ocrStatus === 'processing'} variant="primary" className="w-full sm:w-auto">
-              {ocrStatus === 'processing' ? 'Elaborazione...' : 'Esegui OCR'}
-            </Button>
-          </div>
-        )}
-      </div>
 
-      {/* OCR progress / raw text */}
-      {ocrStatus === 'processing' && (
-        <p className="text-blue-600 dark:text-blue-400">Elaborazione OCR in corso…</p>
-      )}
-      {rawText && (
-        <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-4">
-          <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Testo estratto (OCR)</h2>
-          <textarea
-            readOnly
-            value={rawText}
-            rows={6}
-            className="w-full p-2 border border-gray-300 dark:border-brand-600 rounded-xl bg-gray-50 dark:bg-brand-700 font-mono text-sm"
-          />
-        </div>
-      )}
-
-      {/* Editable header fields */}
-      {rawText && (
-        <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Intestazione documento</h2>
-            {header.needsReview && (
-              <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 px-2 py-1 rounded">
-                Da verificare
-              </span>
+        {/* Upload area - only for users with create capability */}
+        {canCreate && (
+          <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
+            <label className="block font-medium mb-2 text-gray-900 dark:text-white">Carica immagine o PDF</label>
+            {/* Visually hidden file input with accessible label */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleFileChange}
+                id="file-upload"
+                className="sr-only"
+              />
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 text-center transition-colors"
+              >
+                Scegli file...
+              </label>
+              {file && (
+                <span className="text-gray-700 dark:text-gray-300 break-all text-sm">{file.name}</span>
+              )}
+            </div>
+            {file && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
+                <Button onClick={handleUpload} disabled={ocrStatus === 'processing'} variant="primary" className="w-full sm:w-auto">
+                  {ocrStatus === 'processing' ? 'Elaborazione...' : 'Esegui OCR'}
+                </Button>
+              </div>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block font-medium mb-1 text-gray-700 dark:text-gray-300">
-                Numero documento {header.needsReview && headerValidation.missingFields.includes('documentNumber') && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                name="documentNumber"
-                value={header.documentNumber || ''}
-                onChange={handleHeaderChange}
-                className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
-                placeholder="Es. DDT-2024-001"
-              />
+        )}
+
+        {/* Letture user notice */}
+        {!canCreate && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
+            <p className="text-blue-700 dark:text-blue-300 text-sm">
+              Modalità di sola lettura. Contatta l'amministratore per caricare documenti o aggiornare l'inventario.
+            </p>
+          </div>
+        )}
+
+        {/* OCR progress / raw text */}
+        {ocrStatus === 'processing' && (
+          <p className="text-blue-600 dark:text-blue-400 animate-fade-fast">Elaborazione OCR in corso…</p>
+        )}
+        {rawText && canCreate && (
+          <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-4">
+            <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Testo estratto (OCR)</h2>
+            <textarea
+              readOnly
+              value={rawText}
+              rows={6}
+              className="w-full p-2 border border-gray-300 dark:border-brand-600 rounded-xl bg-gray-50 dark:bg-brand-700 font-mono text-sm"
+            />
+          </div>
+        )}
+
+        {/* Editable header fields - only for create-capable users */}
+        {rawText && canCreate && (
+          <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Intestazione documento</h2>
+              {header.needsReview && (
+                <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 px-2 py-1 rounded">
+                  Da verificare
+                </span>
+              )}
             </div>
-            <div>
-              <label className="block font-medium mb-1 text-gray-700 dark:text-gray-300">
-                Data documento {header.needsReview && headerValidation.missingFields.includes('documentDate') && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                name="documentDate"
-                type="date"
-                value={header.documentDate || ''}
-                onChange={handleHeaderChange}
-                className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1 text-gray-700 dark:text-gray-300">
-                Fornitore {header.needsReview && headerValidation.missingFields.includes('supplierName') && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                name="supplierName"
-                value={header.supplierName || ''}
-                onChange={handleHeaderChange}
-                className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
-                placeholder="Nome fornitore"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block font-medium mb-1 text-gray-700 dark:text-gray-300">Note documento</label>
-              <textarea
-                name="notes"
-                value={header.notes || ''}
-                onChange={handleHeaderChange}
-                rows={2}
-                className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
-                placeholder="Note aggiuntive"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Numero documento {header.needsReview && headerValidation.missingFields.includes('documentNumber') && <span className="text-red-500">*</span>}
+                </label>
+                <input
+                  name="documentNumber"
+                  value={header.documentNumber || ''}
+                  onChange={handleHeaderChange}
+                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
+                  placeholder="Es. DDT-2024-001"
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Data documento {header.needsReview && headerValidation.missingFields.includes('documentDate') && <span className="text-red-500">*</span>}
+                </label>
+                <input
+                  name="documentDate"
+                  type="date"
+                  value={header.documentDate || ''}
+                  onChange={handleHeaderChange}
+                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Fornitore {header.needsReview && headerValidation.missingFields.includes('supplierName') && <span className="text-red-500">*</span>}
+                </label>
+                <input
+                  name="supplierName"
+                  value={header.supplierName || ''}
+                  onChange={handleHeaderChange}
+                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
+                  placeholder="Nome fornitore"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-300">Note documento</label>
+                <textarea
+                  name="notes"
+                  value={header.notes || ''}
+                  onChange={handleHeaderChange}
+                  rows={2}
+                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
+                  placeholder="Note aggiuntive"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Line items grid */}
-      {rawText && (
-        <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Righe prodotto</h2>
-            <Button onClick={addItem} variant="secondary" className="text-sm">
-              + Aggiungi riga
+        {/* Line items grid - only for create-capable users */}
+        {rawText && canCreate && (
+          <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Righe prodotto</h2>
+              <Button onClick={addItem} variant="secondary" className="text-sm">
+                + Aggiungi riga
+              </Button>
+            </div>
+
+            {items.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-400">Nessuna riga prodotto estratta. Aggiungi manualmente o verifica il testo OCR.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full table-auto border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-brand-700">
+                      <th className="p-2 text-left w-2/5 text-gray-900 dark:text-white">Prodotto</th>
+                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Quantità</th>
+                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Unità</th>
+                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Lotto</th>
+                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Scadenza</th>
+                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Note</th>
+                      <th className="p-2 text-center w-16 text-gray-900 dark:text-white">Azioni</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item) => (
+                      <tr key={item.id} className={`${item.needsReview ? 'bg-yellow-50/50 dark:bg-yellow-900/20' : ''}`}>
+                        <td className="p-1">
+                          <input
+                            value={item.productName}
+                            onChange={(e) => handleItemChange(item.id, 'productName', e.target.value)}
+                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                            placeholder="Nome prodotto"
+                          />
+                          {item.reviewReasons && item.reviewReasons.length > 0 && (
+                            <div className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">{item.reviewReasons.join(', ')}</div>
+                          )}
+                        </td>
+                        <td className="p-1">
+                          <NumberStepper
+                            value={item.quantity || 0}
+                            onChange={(v) => handleItemChange(item.id, 'quantity', v)}
+                            unit={item.unit || 'pz'}
+                            min={0}
+                          />
+                        </td>
+                        <td className="p-1">
+                          <select
+                            value={item.unit || ''}
+                            onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
+                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                          >
+                            <option value="">Unità</option>
+                            <option value="kg">kg</option>
+                            <option value="g">g</option>
+                            <option value="l">l</option>
+                            <option value="ml">ml</option>
+                            <option value="pz">pz</option>
+                          </select>
+                        </td>
+                        <td className="p-1">
+                          <input
+                            value={item.lotCode || ''}
+                            onChange={(e) => handleItemChange(item.id, 'lotCode', e.target.value)}
+                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                            placeholder="Lotto"
+                          />
+                        </td>
+                        <td className="p-1">
+                          <input
+                            type="date"
+                            value={item.expiryDate || ''}
+                            onChange={(e) => handleItemChange(item.id, 'expiryDate', e.target.value)}
+                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                          />
+                        </td>
+                        <td className="p-1">
+                          <input
+                            value={item.notes || ''}
+                            onChange={(e) => handleItemChange(item.id, 'notes', e.target.value)}
+                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                            placeholder="Note"
+                          />
+                        </td>
+                        <td className="p-1 text-center">
+                          <Button
+                            onClick={() => removeItem(item.id)}
+                            variant="ghost"
+                            className="px-2 py-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            Rimuovi
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Action buttons - only for create-capable users */}
+        {rawText && canCreate && (
+          <div className="flex gap-3">
+            <Button onClick={saveDocument} variant="secondary">Salva Documento</Button>
+            <Button onClick={createInventoryFromItems} disabled={items.some(i => i.needsReview)}>
+              Crea lotti inventario {items.some(i => i.needsReview) && '(verifica righe)'}
             </Button>
           </div>
+        )}
 
-          {items.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400">Nessuna riga prodotto estratta. Aggiungi manualmente o verifica il testo OCR.</p>
+        {/* History table - all users can view */}
+        <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Cronologia Documenti</h2>
+          {history.length === 0 ? (
+            <p className="text-gray-600 dark:text-gray-400">Nessun documento ancora.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full table-auto border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-brand-700">
-                    <th className="p-2 text-left w-2/5 text-gray-900 dark:text-white">Prodotto</th>
-                    <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Quantità</th>
-                    <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Unità</th>
-                    <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Lotto</th>
-                    <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Scadenza</th>
-                    <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Note</th>
-                    <th className="p-2 text-center w-16 text-gray-900 dark:text-white">Azioni</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => (
-                    <tr key={item.id} className={`${item.needsReview ? 'bg-yellow-50/50 dark:bg-yellow-900/20' : ''}`}>
-                      <td className="p-1">
-                        <input
-                          value={item.productName}
-                          onChange={(e) => handleItemChange(item.id, 'productName', e.target.value)}
-                          className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
-                          placeholder="Nome prodotto"
-                        />
-                        {item.reviewReasons && item.reviewReasons.length > 0 && (
-                          <div className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">{item.reviewReasons.join(', ')}</div>
-                        )}
-                      </td>
-                      <td className="p-1">
-                        <NumberStepper
-                          value={item.quantity || 0}
-                          onChange={(v) => handleItemChange(item.id, 'quantity', v)}
-                          unit={item.unit || 'pz'}
-                          min={0}
-                        />
-                      </td>
-                      <td className="p-1">
-                        <select
-                          value={item.unit || ''}
-                          onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
-                          className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
-                        >
-                          <option value="">Unità</option>
-                          <option value="kg">kg</option>
-                          <option value="g">g</option>
-                          <option value="l">l</option>
-                          <option value="ml">ml</option>
-                          <option value="pz">pz</option>
-                        </select>
-                      </td>
-                      <td className="p-1">
-                        <input
-                          value={item.lotCode || ''}
-                          onChange={(e) => handleItemChange(item.id, 'lotCode', e.target.value)}
-                          className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
-                          placeholder="Lotto"
-                        />
-                      </td>
-                      <td className="p-1">
-                        <input
-                          type="date"
-                          value={item.expiryDate || ''}
-                          onChange={(e) => handleItemChange(item.id, 'expiryDate', e.target.value)}
-                          className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
-                        />
-                      </td>
-                      <td className="p-1">
-                        <input
-                          value={item.notes || ''}
-                          onChange={(e) => handleItemChange(item.id, 'notes', e.target.value)}
-                          className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
-                          placeholder="Note"
-                        />
-                      </td>
-                      <td className="p-1 text-center">
-                        <Button
-                          onClick={() => removeItem(item.id)}
-                          variant="ghost"
-                          className="px-2 py-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          Rimuovi
-                        </Button>
-                      </td>
+            <>
+              {/* Mobile card view */}
+              <div className="md:hidden space-y-3">
+                {history.map((doc) => (
+                  <div key={doc.id} className="bg-gray-50 dark:bg-brand-900/30 rounded-lg p-3 border border-gray-200 dark:border-brand-700">
+                    <div className="font-medium text-gray-900 dark:text-white break-all">{doc.fileName}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{new Date(doc.createdAt).toLocaleString()}</div>
+                    <div className="mt-2"><StatusBadge status={doc.status} /></div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full table-auto border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-brand-700">
+                      <th className="p-2 text-left text-gray-900 dark:text-white">Nome file</th>
+                      <th className="p-2 text-left text-gray-900 dark:text-white">Data</th>
+                      <th className="p-2 text-left text-gray-900 dark:text-white">Stato</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {history.map((doc) => (
+                      <tr key={doc.id} className="border-t border-gray-200 dark:border-brand-700">
+                        <td className="p-2 text-gray-900 dark:text-white">{doc.fileName}</td>
+                        <td className="p-2 text-gray-600 dark:text-gray-300">{new Date(doc.createdAt).toLocaleString()}</td>
+                        <td className="p-2"><StatusBadge status={doc.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
-      )}
-
-      {/* Action buttons */}
-      {rawText && (
-        <div className="flex gap-3">
-          <Button onClick={saveDocument} variant="secondary">Salva Documento</Button>
-          <Button onClick={createInventoryFromItems} disabled={items.some(i => i.needsReview)}>
-            Crea lotti inventario {items.some(i => i.needsReview) && '(verifica righe)'}
-          </Button>
-        </div>
-      )}
-
-      {/* History table */}
-      <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
-        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Cronologia Documenti</h2>
-        {history.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-400">Nessun documento ancora.</p>
-        ) : (
-          <>
-            {/* Mobile card view */}
-            <div className="md:hidden space-y-3">
-              {history.map((doc) => (
-                <div key={doc.id} className="bg-gray-50 dark:bg-brand-900/30 rounded-lg p-3 border border-gray-200 dark:border-brand-700">
-                  <div className="font-medium text-gray-900 dark:text-white break-all">{doc.fileName}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{new Date(doc.createdAt).toLocaleString()}</div>
-                  <div className="mt-2"><StatusBadge status={doc.status} /></div>
-                </div>
-              ))}
-            </div>
-            {/* Desktop table view */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full table-auto border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-brand-700">
-                    <th className="p-2 text-left text-gray-900 dark:text-white">Nome file</th>
-                    <th className="p-2 text-left text-gray-900 dark:text-white">Data</th>
-                    <th className="p-2 text-left text-gray-900 dark:text-white">Stato</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((doc) => (
-                    <tr key={doc.id} className="border-t border-gray-200 dark:border-brand-700">
-                      <td className="p-2 text-gray-900 dark:text-white">{doc.fileName}</td>
-                      <td className="p-2 text-gray-600 dark:text-gray-300">{new Date(doc.createdAt).toLocaleString()}</td>
-                      <td className="p-2"><StatusBadge status={doc.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
       </div>
-    </div>
+    </AnimatedPage>
   );
 };
 

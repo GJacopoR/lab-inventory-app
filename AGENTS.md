@@ -11,13 +11,64 @@ See `README.md` for key commands and `docs/runbook.md` for the full command chec
 ## Architecture Map
 
 - **Shell**: `src/components/ui/AuthenticatedShell.tsx` - Flex layout, responsive nav
-- **Router**: `src/App.tsx` - Protected routes wrapper  
+- **Router**: `src/App.tsx` - Protected routes wrapper
+- **Auth**: `src/auth/AuthContext.tsx` - Role-based capabilities (see below)
 - **DB**: `src/repositories/db.ts` - 13 Dexie tables (see `docs/architecture.md` for schema)
 - **PWA config**: `vite.config.mts` - base path via GITHUB_PAGES env var
 - **Backup**: `src/repositories/backupRepository.ts` (export/import, validation)
 - **Pages**: `src/pages/` - Dashboard, Inventory, Recipes, Labels, Settings, Documents
 
 **Key flows**: See `docs/architecture.md` for diagram of label preview flow.
+
+## Role-Based Permissions
+
+Roles are hierarchical: `lettura` < `operatore` < `admin`.
+
+| Capability | lettura | operatore | admin |
+|------------|---------|-----------|-------|
+| canRead | ✓ | ✓ | ✓ |
+| canCreate | ✗ | ✓ | ✓ |
+| canEdit | ✗ | ✓ | ✓ |
+| canDelete | ✗ | ✗ | ✓ |
+| canAccessSettings | ✗ | ✗ | ✓ |
+| canPrintLabels | ✓ | ✓ | ✓ |
+
+**Demo credentials** (for development phase):
+- Username: `admin`, `operatore`, or `lettura`
+- Password: `password`
+
+**Note**: Demo usernames happen to match role names, but this is temporary. Permissions are derived from the `role` field in the user record, not the username.
+
+## Mobile vs Desktop Behavior
+
+**Mobile navigation** (`AuthenticatedShell.tsx`):
+- Hamburger menu toggles mobile nav panel
+- Panel closes on: outside click, Escape key, or navigation
+- Logout button visible in mobile nav (was missing before)
+- Animated via `animate-slide-down` CSS class
+
+**Desktop navigation**:
+- Persistent sidebar on left
+- Logout button in sidebar footer
+- No animation on nav open/close
+
+## RBAC Enforcement
+
+Permission checks use `useCapabilities()` hook which reads from `AuthContext`. Enforcement happens in:
+
+- **Route protection** (`ProtectedRoute.tsx`): `/settings` blocked for non-admin roles
+- **Navigation filtering** (`AuthenticatedShell.tsx`): Settings link hidden for non-admin
+- **UI action visibility** (`InventoryTable.tsx`, `Recipes.tsx`, `RecipeDetail.tsx`, `Documents.tsx`): Create/Edit/Delete buttons hidden based on `canCreate`/`canEdit`/`canDelete`
+- **Runtime guards**: All handler functions check capabilities before executing mutations (e.g., `handleAddLot`, `handleEditLot`, `handleDeleteLot`, `saveDocument`, `createInventoryFromItems`)
+
+**Key enforcement points**:
+- `+ Lotto` button: `canCreate` required
+- `Modifica`/`Elimina` lot buttons: `canEdit`/`canDelete` required
+- OCR upload area: `canCreate` required (invisible for lettura)
+- Recipes create button: `canCreate` required
+- Recipe preparation form: `canCreate` required
+- Documents "Aggiungi riga": `canCreate` required
+- Documents "Crea lotti inventario": `canCreate` required
 
 ## Critical Invariants
 

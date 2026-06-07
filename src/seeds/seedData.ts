@@ -16,7 +16,7 @@ function genId(): string {
 /** Seed data – runs only when the DB is empty. */
 export async function seedIfEmpty(): Promise<void> {
   // Compute any async non‑DB work (e.g., password hashing) *outside* the Dexie transaction.
-  const password = 'password123'; // simple demo password for all users
+  const password = 'password'; // simple demo password for all users
   const hash = await bcrypt.hash(password, 10);
 
   // Prepare data structures that will be written inside the transaction.
@@ -84,4 +84,33 @@ export async function seedIfEmpty(): Promise<void> {
     await db.lots.bulkAdd(lots);
     // No movements added.
   });
+}
+
+/**
+ * Ensure seeded users exist with correct credentials.
+ * Called on app init to guarantee the 3 demo users are always available
+ * and have the current password hash.
+ */
+export async function ensureSeededUsers(): Promise<void> {
+  const roles = ['admin', 'operatore', 'lettura'];
+  const password = 'password';
+  const hash = await bcrypt.hash(password, 10);
+
+  const existing = await db.users.toArray();
+  const existingUsernames = new Set(existing.map(u => u.username));
+
+  for (const role of roles) {
+    const userExists = existing.find(u => u.username === role);
+    if (userExists) {
+      // Update password hash in case it changed
+      await db.users.update(userExists.id, { passwordHash: hash });
+    } else {
+      await db.users.add({
+        id: genId(),
+        username: role,
+        passwordHash: hash,
+        role: role as 'admin' | 'operatore' | 'lettura',
+      });
+    }
+  }
 }

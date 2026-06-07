@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { exportBackup, restoreBackup } from '../repositories/backupRepository';
+import { AnimatedPage } from '../components/ui/PageHeader';
 
 /**
  * Settings page – data backup and restore.
@@ -57,62 +58,64 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Impostazioni</h1>
+    <AnimatedPage>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Impostazioni</h1>
 
-      {/* Backup section */}
-      <section className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Backup dati</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Esporta tutti i dati dell'app in un file JSON. Conserva questo file in un posto sicuro.
-        </p>
-        <Button variant="primary" onClick={handleExport}>
-          Esporta dati
-        </Button>
-      </section>
-
-      {/* Restore section */}
-      <section className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Ripristina dati</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Importa un backup precedente. <strong>Attenzione:</strong> i dati esistenti verranno sovrascritti.
-        </p>
-
-        {showConfirm ? (
-          <div className="border border-red-200 bg-red-50 dark:bg-red-900/20 rounded-lg p-4 mb-4">
-            <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-              Sei sicuro? Questa operazione sostituirà tutti i dati esistenti.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={cancelImport}>Annulla</Button>
-              <Button variant="primary" onClick={() => {
-                // Trigger file input click
-                document.getElementById('restore-file-input')?.click();
-              }}>
-                Conferma e scegli file
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button variant="secondary" onClick={requestImportConfirm}>
-            Ripristina dati
+        {/* Backup section */}
+        <section className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Backup dati</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Esporta tutti i dati dell'app in un file JSON. Conserva questo file in un posto sicuro.
+          </p>
+          <Button variant="primary" onClick={handleExport}>
+            Esporta dati
           </Button>
-        )}
+        </section>
 
-        <input
-          key={fileInputKey}
-          id="restore-file-input"
-          type="file"
-          accept=".json,application/json"
-          onChange={handleImport}
-          className="hidden"
-        />
-      </section>
+        {/* Restore section */}
+        <section className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Ripristina dati</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Importa un backup precedente. <strong>Attenzione:</strong> i dati esistenti verranno sovrascritti.
+          </p>
 
-      {/* Feedback */}
-      {error && <p className="text-red-600 dark:text-red-400 mt-2">{error}</p>}
-      {success && <p className="text-green-600 dark:text-green-400 mt-2">{success}</p>}
-    </div>
+          {showConfirm ? (
+            <div className="border border-red-200 bg-red-50 dark:bg-red-900/20 rounded-lg p-4 mb-4 animate-fade-fast">
+              <p className="text-sm text-red-700 dark:text-red-300 mb-3">
+                Sei sicuro? Questa operazione sostituirà tutti i dati esistenti.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={cancelImport}>Annulla</Button>
+                <Button variant="primary" onClick={() => {
+                  // Trigger file input click
+                  document.getElementById('restore-file-input')?.click();
+                }}>
+                  Conferma e scegli file
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="secondary" onClick={requestImportConfirm}>
+              Ripristina dati
+            </Button>
+          )}
+
+          <input
+            key={fileInputKey}
+            id="restore-file-input"
+            type="file"
+            accept=".json,application/json"
+            onChange={handleImport}
+            className="hidden"
+          />
+        </section>
+
+        {/* Feedback */}
+        {error && <p className="text-red-600 dark:text-red-400 mt-2 animate-fade-fast">{error}</p>}
+        {success && <p className="text-green-600 dark:text-green-400 mt-2 animate-fade-fast">{success}</p>}
+      </div>
+    </AnimatedPage>
   );
 };
 

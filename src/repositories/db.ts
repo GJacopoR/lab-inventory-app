@@ -66,7 +66,7 @@ export const db = new LabInventoryDB();
 // ---------------------------------------------------------------------------
 // Seed‑on‑first‑launch helper – called once the DB is opened.
 // ---------------------------------------------------------------------------
-import { seedIfEmpty } from '../seeds/seedData';
+import { seedIfEmpty, ensureSeededUsers } from '../seeds/seedData';
 import { seedDemoInventory } from './inventoryRepository';
 
 /**
@@ -79,6 +79,9 @@ export async function initDb(): Promise<void> {
   const userCount = await db.users.count();
   if (userCount === 0) {
     await seedIfEmpty();
+  } else {
+    // Ensure seeded users have correct credentials even on existing DB
+    await ensureSeededUsers();
   }
   // Seed inventory demo data if inventory is empty.
   await seedDemoInventory();
