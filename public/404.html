@@ -8,7 +8,7 @@
       // GitHub Pages SPA fallback - redirect to index with route info
       // Using the standard spa-github-pages approach
       const l = window.location;
-      const basePath = '/inventory-app/';
+      const basePath = '/lab-inventory-app/';
       if (l.pathname.startsWith(basePath)) {
         sessionStorage.redirect = l.pathname.slice(basePath.length) + l.search + l.hash;
       }

@@ -5,11 +5,13 @@ import { LotFormModal } from './LotFormModal';
 import { MovementHistory } from './MovementHistory';
 import { useInventory } from '../../hooks/useInventory';
 import { InventoryLot } from '../../domain/inventoryTypes';
+import { useCapabilities } from '../../auth/AuthContext';
 
 /**
  * Responsive inventory view.
  * - Desktop: table layout
  * - Mobile: card-based layout
+ * - Lot actions restricted by role-based permissions
  */
 export const InventoryTable: React.FC = () => {
   const {
@@ -23,6 +25,8 @@ export const InventoryTable: React.FC = () => {
     fetchItemDetails,
     fetchMovements,
   } = useInventory();
+
+  const { canCreate, canEdit, canDelete } = useCapabilities();
 
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [lots, setLots] = useState<InventoryLot[]>([]);
@@ -46,21 +50,24 @@ export const InventoryTable: React.FC = () => {
   };
 
   const handleAddLot = (itemId: string) => {
+    if (!canCreate) return;
     setEditingLot(null);
     setCurrentItemId(itemId);
     setLotModalOpen(true);
   };
 
   const handleEditLot = (lot: InventoryLot) => {
+    if (!canEdit) return;
     setEditingLot(lot);
     setLotModalOpen(true);
   };
 
   const handleDeleteLot = async (lot: InventoryLot) => {
+    if (!canDelete) return;
     const itemName = items.find(i => i.id === lot.itemId)?.name || 'sconosciuto';
     const lotRef = lot.lotNumber || lot.id.substring(0, 8);
     if (!confirm(`Sei sicuro di eliminare il lotto ${lotRef} del prodotto "${itemName}"?`)) return;
-    const { deleteLot } = await import('../../repositories/inventoryRepository');
+    const { deleteLot } = await import('../../repositories/inventoryRepository.js');
     await deleteLot(lot.id);
     if (expandedItemId) {
       const { lots } = await fetchItemDetails(expandedItemId);
@@ -122,11 +129,13 @@ export const InventoryTable: React.FC = () => {
               <div>Scadenza: {it.earliestExpiry ? new Date(it.earliestExpiry).toLocaleDateString() : '-'}</div>
               <div>Lotti: {it.lotCount}</div>
             </div>
-            <div className="mt-3">
-              <Button variant="primary" onClick={() => handleAddLot(it.id)} className="text-xs py-1 px-2">
-                + Lotto
-              </Button>
-            </div>
+            {canCreate && (
+              <div className="mt-3">
+                <Button variant="primary" onClick={() => handleAddLot(it.id)} className="text-xs py-1 px-2">
+                  + Lotto
+                </Button>
+              </div>
+            )}
 
             {/* Expanded content */}
             {expandedItemId === it.id && (
@@ -141,12 +150,16 @@ export const InventoryTable: React.FC = () => {
                       <div>Fornitore: {lot.supplier ?? '-'}</div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="secondary" onClick={() => handleEditLot(lot)} className="text-xs py-1 px-2">
-                        Modifica
-                      </Button>
-                      <Button variant="ghost" onClick={() => handleDeleteLot(lot)} className="text-xs py-1 px-2">
-                        Elimina
-                      </Button>
+                      {canEdit && (
+                        <Button variant="secondary" onClick={() => handleEditLot(lot)} className="text-xs py-1 px-2">
+                          Modifica
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button variant="ghost" onClick={() => handleDeleteLot(lot)} className="text-xs py-1 px-2">
+                          Elimina
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -185,9 +198,11 @@ export const InventoryTable: React.FC = () => {
                       <Button variant="secondary" onClick={() => handleExpand(it.id)} className="text-xs py-1 px-2">
                         {expandedItemId === it.id ? 'Chiudi' : 'Dettagli'}
                       </Button>
-                      <Button variant="primary" onClick={() => handleAddLot(it.id)} className="text-xs py-1 px-2">
-                        + Lotto
-                      </Button>
+                      {canCreate && (
+                        <Button variant="primary" onClick={() => handleAddLot(it.id)} className="text-xs py-1 px-2">
+                          + Lotto
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -219,12 +234,16 @@ export const InventoryTable: React.FC = () => {
                                 <td className="p-2 text-gray-600 dark:text-gray-300">{lot.supplier ?? '-'}</td>
                                 <td className="p-2">
                                   <div className="flex justify-center gap-1">
-                                    <Button variant="secondary" onClick={() => handleEditLot(lot)} className="text-xs py-1 px-2">
-                                      Modifica
-                                    </Button>
-                                    <Button variant="ghost" onClick={() => handleDeleteLot(lot)} className="text-xs py-1 px-2">
-                                      Elimina
-                                    </Button>
+                                    {canEdit && (
+                                      <Button variant="secondary" onClick={() => handleEditLot(lot)} className="text-xs py-1 px-2">
+                                        Modifica
+                                      </Button>
+                                    )}
+                                    {canDelete && (
+                                      <Button variant="ghost" onClick={() => handleDeleteLot(lot)} className="text-xs py-1 px-2">
+                                        Elimina
+                                      </Button>
+                                    )}
                                   </div>
                                 </td>
                               </tr>

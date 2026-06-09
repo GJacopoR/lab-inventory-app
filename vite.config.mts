@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 // Load base path from environment (for GitHub Pages) or default to root
 const getBasePath = () => {
   if (process.env.GITHUB_PAGES) {
-    return '/inventory-app/';
+    return '/lab-inventory-app/';
   }
   return '/';
 };
@@ -15,7 +15,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       manifest: {
         name: 'Lab Inventory PWA',
@@ -41,6 +41,16 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            // Cache navigation requests for offline support
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'navigation-cache',
+            },
+          },
+        ],
       },
     }),
   ],

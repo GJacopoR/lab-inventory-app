@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 interface PageHeaderProps {
   /** Main title */
@@ -15,4 +15,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, classNa
     <h1 className="text-4xl font-bold text-primary-800 mb-2">{title}</h1>
     {subtitle && <p className="text-lg text-gray-600">{subtitle}</p>}
   </header>
+);
+
+/**
+ * Page transition wrapper with subtle fade in animation.
+ * Uses CSS animation for performance, respects system motion preferences.
+ */
+export const AnimatedPage: React.FC<{ children: ReactNode }> = ({ children }) => (
+  <div className="animate-fade-in">{children}</div>
 );

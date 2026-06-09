@@ -14,9 +14,9 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const path = window.location.pathname;
-          const isGitHubPages = path.startsWith('/inventory-app');
-          const swPath = isGitHubPages ? '/inventory-app/sw.js' : '/sw.js';
-          const scope = isGitHubPages ? '/inventory-app/' : '/';
+          const isGitHubPages = path.startsWith('/lab-inventory-app');
+          const swPath = isGitHubPages ? '/lab-inventory-app/sw.js' : '/sw.js';
+          const scope = isGitHubPages ? '/lab-inventory-app/' : '/';
           navigator.serviceWorker.register(swPath, { scope: scope });
         });
       }

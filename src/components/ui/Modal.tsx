@@ -47,19 +47,20 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 print-none">
+    <div className="fixed !m-0 inset-0 z-50 flex items-center justify-center p-3 md:p-4 print-none">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-fast"
         onClick={onClose}
       />
       {/* Modal content */}
-      <div className={`relative bg-white dark:bg-brand-800 rounded-xl shadow-xl w-full ${sizeClasses[size]} max-h-[95vh] md:max-h-[90vh] overflow-y-auto`}>
+      <div className={`relative bg-white dark:bg-brand-800 rounded-xl shadow-xl w-full ${sizeClasses[size]} max-h-[95vh] md:max-h-[90vh] overflow-y-auto animate-scale-in`}>
         <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 dark:border-brand-700">
           <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-brand-700 text-gray-500 dark:text-gray-400"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-brand-700 text-gray-500 dark:text-gray-400 transition-colors"
+            aria-label="Chiudi"
           >
             ✕
           </button>

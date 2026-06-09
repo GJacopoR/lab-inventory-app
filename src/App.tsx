@@ -12,6 +12,7 @@ import Recipes from './pages/Recipes';
 import Documents from './pages/Documents';
 import Labels from './pages/Labels';
 import RecipeDetail from './pages/RecipeDetail';
+import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthenticatedShell } from './components/ui/AuthenticatedShell';
 import { useAuth } from './auth/AuthContext';
@@ -39,6 +40,7 @@ const App: React.FC = () => (
           <Route path="/recipes/:id" element={<RecipeDetail />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/labels" element={<Labels />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
 
