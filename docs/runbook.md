@@ -21,6 +21,10 @@ See `README.md` for all commands. Quick reference:
 4. Go offline - offline banner should appear
 5. Settings → Export (downloads JSON file)
 6. Settings → Restore (shows confirmation)
+7. Documents → Upload an invoice image — OCR parses items with correct quantity/unit/product
+8. Documents → Verify tabular (column-based) DDT documents detect layout and extract rows correctly
+9. Documents → Verify generic freeform documents fall back to `parseGeneric` and produce valid items
+10. Documents → Verify missing documentNumber/documentDate/supplierName triggers `needsReview`
 
 For exhaustive checks, see `MANUAL_CHECKLIST.md`.
 
