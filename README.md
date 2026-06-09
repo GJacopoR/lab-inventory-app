@@ -31,7 +31,6 @@ npm run quality      # Run all: typecheck + test + verify:pwa
 ```bash
 npm run build      # Build to /dist
 GITHUB_PAGES=true npm run build  # Build with /lab-inventory-app/ base path
-
 npm run deploy     # Deploy to GitHub Pages (gh-pages branch)
 ```
 
