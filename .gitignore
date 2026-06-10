@@ -48,3 +48,5 @@ desktop.ini
 # --- Vite ---
 # Ignora la cartella di cache interna di Vite
 .vite/
+# Tesseract language data (downloaded at runtime by tesseract.js)
+*.traineddata
