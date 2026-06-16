@@ -1,10 +1,11 @@
 {
   "name": "lab-inventory-pwa",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:pages": "GITHUB_PAGES=true npm run build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -14,7 +15,7 @@
     "cypress": "cypress open",
     "seed": "node src/seeds/seedOnFirstLaunch.js",
     "deploy": "gh-pages -d dist",
-    "predeploy": "npm run build"
+    "predeploy": "npm run build:pages"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
