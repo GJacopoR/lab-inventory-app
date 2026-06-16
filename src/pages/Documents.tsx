@@ -140,7 +140,7 @@ const Documents: React.FC = () => {
       matchedItemId: null,
       needsReview: true,
     };
-    setItems((prev) => [...prev, newItem]);
+    setItems((prev) => [newItem, ...prev]);
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -244,6 +244,52 @@ const Documents: React.FC = () => {
     }
   };
 
+  // Open document from history - creates object URL from base64 data
+  const handleViewDocument = async (docId: string) => {
+    // Open blank tab synchronously to avoid popup blocker
+    const newTab = window.open('', '_blank');
+    if (!newTab) {
+      alert('Impossibile aprire il documento. Il browser sta bloccando i popup.');
+      return;
+    }
+
+    try {
+      const doc = await documentRepo.getById(docId);
+      if (!doc || !doc.fileData) {
+        newTab.close();
+        alert('Documento non trovato o dati non disponibili.');
+        return;
+      }
+
+      // Convert base64 to blob
+      const base64Data = doc.fileData;
+      const mimeMatch = base64Data.match(/^data:([^;]+);base64,/);
+      const mimeType = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+      const byteCharacters = atob(base64Data.split(',')[1] || base64Data);
+      const byteArrays = [];
+      for (let i = 0; i < byteCharacters.length; i += 512) {
+        const slice = byteCharacters.slice(i, i + 512);
+        const byteNumbers = new Array(slice.length);
+        for (let j = 0; j < slice.length; j++) {
+          byteNumbers[j] = slice.charCodeAt(j);
+        }
+        byteArrays.push(new Uint8Array(byteNumbers));
+      }
+      const blob = new Blob(byteArrays, { type: mimeType });
+      const url = URL.createObjectURL(blob);
+
+      // Set the location of the new tab
+      newTab.location.href = url;
+
+      // Revoke URL after page loads to free memory
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (e) {
+      console.error('Error opening document:', e);
+      newTab.close();
+      alert('Errore durante l\'apertura del documento.');
+    }
+  };
+
   // ----- Render -----
   const headerValidation = validateHeader(header);
 
@@ -307,7 +353,7 @@ const Documents: React.FC = () => {
               readOnly
               value={rawText}
               rows={6}
-              className="w-full p-2 border border-gray-300 dark:border-brand-600 rounded-xl bg-gray-50 dark:bg-brand-700 font-mono text-sm"
+              className="w-full p-2 border border-gray-300 dark:border-brand-600 rounded-xl bg-gray-50 dark:bg-gray-800 font-mono text-sm text-gray-900 dark:text-gray-100"
             />
           </div>
         )}
@@ -332,7 +378,7 @@ const Documents: React.FC = () => {
                   name="documentNumber"
                   value={header.documentNumber || ''}
                   onChange={handleHeaderChange}
-                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
+                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   placeholder="Es. DDT-2024-001"
                 />
               </div>
@@ -345,7 +391,7 @@ const Documents: React.FC = () => {
                   type="date"
                   value={header.documentDate || ''}
                   onChange={handleHeaderChange}
-                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
+                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 />
               </div>
               <div>
@@ -356,7 +402,7 @@ const Documents: React.FC = () => {
                   name="supplierName"
                   value={header.supplierName || ''}
                   onChange={handleHeaderChange}
-                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
+                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   placeholder="Nome fornitore"
                 />
               </div>
@@ -367,7 +413,7 @@ const Documents: React.FC = () => {
                   value={header.notes || ''}
                   onChange={handleHeaderChange}
                   rows={2}
-                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-brand-700"
+                  className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   placeholder="Note aggiuntive"
                 />
               </div>
@@ -379,55 +425,48 @@ const Documents: React.FC = () => {
         {rawText && canCreate && (
           <div className="bg-white dark:bg-brand-800 rounded-xl border border-gray-200 dark:border-brand-700 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Righe prodotto</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Prodotti aggiunti</h2>
               <Button onClick={addItem} variant="secondary" className="text-sm">
-                + Aggiungi riga
+                + Aggiungi riga prodotto
               </Button>
             </div>
 
             {items.length === 0 ? (
-              <p className="text-gray-600 dark:text-gray-400">Nessuna riga prodotto estratta. Aggiungi manualmente o verifica il testo OCR.</p>
+              <p className="text-gray-600 dark:text-gray-400">Nessun prodotto estratto. Aggiungi manualmente o verifica il testo OCR.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full table-auto border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50 dark:bg-brand-700">
-                      <th className="p-2 text-left w-2/5 text-gray-900 dark:text-white">Prodotto</th>
-                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Quantità</th>
-                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Unità</th>
-                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Lotto</th>
-                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Scadenza</th>
-                      <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Note</th>
-                      <th className="p-2 text-center w-16 text-gray-900 dark:text-white">Azioni</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => (
-                      <tr key={item.id} className={`${item.needsReview ? 'bg-yellow-50/50 dark:bg-yellow-900/20' : ''}`}>
-                        <td className="p-1">
-                          <input
-                            value={item.productName}
-                            onChange={(e) => handleItemChange(item.id, 'productName', e.target.value)}
-                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
-                            placeholder="Nome prodotto"
-                          />
-                          {item.reviewReasons && item.reviewReasons.length > 0 && (
-                            <div className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">{item.reviewReasons.join(', ')}</div>
-                          )}
-                        </td>
-                        <td className="p-1">
+              <>
+                {/* Mobile card view - stacked layout */}
+                <div className="md:hidden space-y-4">
+                  {items.map((item) => (
+                    <div key={item.id} className={`bg-white dark:bg-brand-700 rounded-xl border border-gray-200 dark:border-brand-600 p-4 space-y-3 ${item.needsReview ? 'border-l-4 border-yellow-400' : ''}`}>
+                      <div>
+                        <label className="block font-medium mb-1 text-xs text-gray-700 dark:text-gray-300">Prodotto</label>
+                        <input
+                          value={item.productName}
+                          onChange={(e) => handleItemChange(item.id, 'productName', e.target.value)}
+                          className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                          placeholder="Nome prodotto"
+                        />
+                        {item.reviewReasons && item.reviewReasons.length > 0 && (
+                          <div className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">{item.reviewReasons.join(', ')}</div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-medium mb-1 text-xs text-gray-700 dark:text-gray-300">Quantità</label>
                           <NumberStepper
                             value={item.quantity || 0}
                             onChange={(v) => handleItemChange(item.id, 'quantity', v)}
                             unit={item.unit || 'pz'}
                             min={0}
                           />
-                        </td>
-                        <td className="p-1">
+                        </div>
+                        <div>
+                          <label className="block font-medium mb-1 text-xs text-gray-700 dark:text-gray-300">Unità</label>
                           <select
                             value={item.unit || ''}
                             onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
-                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                            className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                           >
                             <option value="">Unità</option>
                             <option value="kg">kg</option>
@@ -436,45 +475,139 @@ const Documents: React.FC = () => {
                             <option value="ml">ml</option>
                             <option value="pz">pz</option>
                           </select>
-                        </td>
-                        <td className="p-1">
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-medium mb-1 text-xs text-gray-700 dark:text-gray-300">Lotto</label>
                           <input
                             value={item.lotCode || ''}
                             onChange={(e) => handleItemChange(item.id, 'lotCode', e.target.value)}
-                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                            className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                             placeholder="Lotto"
                           />
-                        </td>
-                        <td className="p-1">
+                        </div>
+                        <div>
+                          <label className="block font-medium mb-1 text-xs text-gray-700 dark:text-gray-300">Scadenza</label>
                           <input
                             type="date"
                             value={item.expiryDate || ''}
                             onChange={(e) => handleItemChange(item.id, 'expiryDate', e.target.value)}
-                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                            className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                           />
-                        </td>
-                        <td className="p-1">
-                          <input
-                            value={item.notes || ''}
-                            onChange={(e) => handleItemChange(item.id, 'notes', e.target.value)}
-                            className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-brand-700 ${item.needsReview ? 'border-yellow-400' : ''}`}
-                            placeholder="Note"
-                          />
-                        </td>
-                        <td className="p-1 text-center">
-                          <Button
-                            onClick={() => removeItem(item.id)}
-                            variant="ghost"
-                            className="px-2 py-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          >
-                            Rimuovi
-                          </Button>
-                        </td>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block font-medium mb-1 text-xs text-gray-700 dark:text-gray-300">Note</label>
+                        <input
+                          value={item.notes || ''}
+                          onChange={(e) => handleItemChange(item.id, 'notes', e.target.value)}
+                          className="w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                          placeholder="Note"
+                        />
+                      </div>
+                      <div className="pt-2">
+                        <Button
+                          onClick={() => removeItem(item.id)}
+                          variant="ghost"
+                          className="w-full px-2 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          Rimuovi
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop table view */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full table-auto border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-brand-700">
+                        <th className="p-2 text-left w-2/5 text-gray-900 dark:text-white">Prodotto</th>
+                        <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Quantità</th>
+                        <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Unità</th>
+                        <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Lotto</th>
+                        <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Scadenza</th>
+                        <th className="p-2 text-left w-1/6 text-gray-900 dark:text-white">Note</th>
+                        <th className="p-2 text-center w-16 text-gray-900 dark:text-white">Azioni</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {items.map((item) => (
+                        <tr key={item.id} className={`${item.needsReview ? 'bg-yellow-50/50 dark:bg-yellow-900/20' : ''}`}>
+                          <td className="p-1">
+                            <input
+                              value={item.productName}
+                              onChange={(e) => handleItemChange(item.id, 'productName', e.target.value)}
+                              className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                              placeholder="Nome prodotto"
+                            />
+                            {item.reviewReasons && item.reviewReasons.length > 0 && (
+                              <div className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">{item.reviewReasons.join(', ')}</div>
+                            )}
+                          </td>
+                          <td className="p-1">
+                            <NumberStepper
+                              value={item.quantity || 0}
+                              onChange={(v) => handleItemChange(item.id, 'quantity', v)}
+                              unit={item.unit || 'pz'}
+                              min={0}
+                            />
+                          </td>
+                          <td className="p-1">
+                            <select
+                              value={item.unit || ''}
+                              onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
+                              className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                            >
+                              <option value="">Unità</option>
+                              <option value="kg">kg</option>
+                              <option value="g">g</option>
+                              <option value="l">l</option>
+                              <option value="ml">ml</option>
+                              <option value="pz">pz</option>
+                            </select>
+                          </td>
+                          <td className="p-1">
+                            <input
+                              value={item.lotCode || ''}
+                              onChange={(e) => handleItemChange(item.id, 'lotCode', e.target.value)}
+                              className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                              placeholder="Lotto"
+                            />
+                          </td>
+                          <td className="p-1">
+                            <input
+                              type="date"
+                              value={item.expiryDate || ''}
+                              onChange={(e) => handleItemChange(item.id, 'expiryDate', e.target.value)}
+                              className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                            />
+                          </td>
+                          <td className="p-1">
+                            <input
+                              value={item.notes || ''}
+                              onChange={(e) => handleItemChange(item.id, 'notes', e.target.value)}
+                              className={`w-full border border-gray-300 dark:border-brand-600 rounded-xl p-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${item.needsReview ? 'border-yellow-400' : ''}`}
+                              placeholder="Note"
+                            />
+                          </td>
+                          <td className="p-1 text-center">
+                            <Button
+                              onClick={() => removeItem(item.id)}
+                              variant="ghost"
+                              className="px-2 py-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                              Rimuovi
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -496,17 +629,21 @@ const Documents: React.FC = () => {
             <p className="text-gray-600 dark:text-gray-400">Nessun documento ancora.</p>
           ) : (
             <>
-              {/* Mobile card view */}
+              {/* Mobile card view - clickable */}
               <div className="md:hidden space-y-3">
                 {history.map((doc) => (
-                  <div key={doc.id} className="bg-gray-50 dark:bg-brand-900/30 rounded-lg p-3 border border-gray-200 dark:border-brand-700">
+                  <div
+                    key={doc.id}
+                    onClick={() => handleViewDocument(doc.id)}
+                    className="bg-gray-50 dark:bg-brand-900/30 rounded-lg p-3 border border-gray-200 dark:border-brand-700 cursor-pointer hover:shadow-md transition-shadow"
+                  >
                     <div className="font-medium text-gray-900 dark:text-white break-all">{doc.fileName}</div>
                     <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{new Date(doc.createdAt).toLocaleString()}</div>
                     <div className="mt-2"><StatusBadge status={doc.status} /></div>
                   </div>
                 ))}
               </div>
-              {/* Desktop table view */}
+              {/* Desktop table view - clickable rows */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full table-auto border-collapse">
                   <thead>
@@ -518,7 +655,11 @@ const Documents: React.FC = () => {
                   </thead>
                   <tbody>
                     {history.map((doc) => (
-                      <tr key={doc.id} className="border-t border-gray-200 dark:border-brand-700">
+                      <tr
+                        key={doc.id}
+                        onClick={() => handleViewDocument(doc.id)}
+                        className="border-t border-gray-200 dark:border-brand-700 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-brand-700/50"
+                      >
                         <td className="p-2 text-gray-900 dark:text-white">{doc.fileName}</td>
                         <td className="p-2 text-gray-600 dark:text-gray-300">{new Date(doc.createdAt).toLocaleString()}</td>
                         <td className="p-2"><StatusBadge status={doc.status} /></td>
