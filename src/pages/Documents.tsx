@@ -140,7 +140,7 @@ const Documents: React.FC = () => {
       matchedItemId: null,
       needsReview: true,
     };
-    setItems((prev) => [...prev, newItem]);
+    setItems((prev) => [newItem, ...prev]);
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
