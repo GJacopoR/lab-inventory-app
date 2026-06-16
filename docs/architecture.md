@@ -49,6 +49,19 @@ Two preview paths:
 - Inline modal on RecipeDetail for past preparations
 - Auto-preview on Labels page when arriving via `?prep=` URL param
 
+## OCR Flow
+
+OCR processing lives in `src/util/ocr.ts` (using Tesseract.js). The flow:
+
+1. **Text extraction**: `extractTextFromFile()` runs OCR with `ita+eng` language for Italian invoice recognition
+2. **Layout detection**: `detectLayout()` classifies documents as `tabular` (column-based DDT/invoices), `freeform`, or `unknown` by scoring lines against column keywords (Quantità, Prezzo, Importo, Lotto, Descrizione, Articolo, etc.)
+3. **Supplier detection**: `detectSupplier()` matches known suppliers — `eurofish` (eurofish napoli, eurofish s.r.l, eurofish srl), `rossi`, `mangim`
+4. **Header extraction**: `extractHeader()` parses document number (including DDT format `2268 | PE2026`), document date (validated year 2000-2099), supplier name; filters address lines
+5. **Tabular parser**: `parseTabular()` processes column-based layouts by finding quantity+unit patterns below the detected column header row, with product name extracted from text preceding the quantity match
+6. **Generic parser**: `parseGeneric()` handles freeform documents with noise filtering (`isGarbageLine`), header/footer line skipping (`isHeaderOrFooterLine`), lot code detection without `lotto:` prefix (`findLotCode`), and KGx unit support
+7. **Validation**: `normalizeDate()` validates year/month/day ranges; `validateItem()` checks quantity bounds, product name length, unit standard, and expiry date
+8. **Public API**: `extractTextFromFile`, `parseDocumentText`, `validateHeader`, `validateLineItem`
+
 ## Data Model (Dexie)
 
 13 tables defined in `src/repositories/db.ts`:

@@ -133,6 +133,7 @@ Sensitive areas include:
 - `src/components/ui/LabelPreviewModal.tsx`
 - `src/components/ui/Modal.tsx`
 - `src/components/ui/AuthenticatedShell.tsx`
+- `src/util/ocr.ts` (OCR pipeline — changes affect all document parsing; verify against real invoices)
 
 Every completion report must include:
 1. Docs impacted: yes/no
