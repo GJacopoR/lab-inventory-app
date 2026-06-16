@@ -25,6 +25,9 @@ See `README.md` for all commands. Quick reference:
 8. Documents → Verify tabular (column-based) DDT documents detect layout and extract rows correctly
 9. Documents → Verify generic freeform documents fall back to `parseGeneric` and produce valid items
 10. Documents → Verify missing documentNumber/documentDate/supplierName triggers `needsReview`
+11. Documents → Verify mobile view shows stacked product cards for editing OCR items (not horizontal scroll)
+12. Documents → Click on history card opens scanned document in new tab
+13. Documents → Verify dark mode inputs show light text on dark backgrounds
 
 For exhaustive checks, see `MANUAL_CHECKLIST.md`.
 
